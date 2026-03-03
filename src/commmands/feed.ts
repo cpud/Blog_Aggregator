@@ -1,8 +1,8 @@
 import { XMLParser } from "fast-xml-parser";
 import { error } from "node:console";
 import { parse } from "node:path";
-import { createFeed } from "src/lib/db/queries/feed";
-import { getUser } from "src/lib/db/queries/users";
+import { createFeed, getFeeds } from "src/lib/db/queries/feed";
+import { getUser, getUserById } from "src/lib/db/queries/users";
 import { users } from "src/lib/db/schema";
 import { User, Feed } from "src/lib/db/schema";
 import { readConfig } from "src/config";
@@ -101,6 +101,31 @@ export async function fetchFeed(feedURL: string) {
     }
 
 
+}
+
+export async function handlerGetAllFeeds(){
+    const feeds = await getFeeds();
+    if (feeds.length === 0) {
+        console.log(`No feeds found.`);
+        return;
+    }
+
+    console.log(`Found %d feeds: \n`, feeds.length);
+    for (let feed of feeds) {
+        const user_get = await getUserById(String(feed.user_id));
+        if (!user_get) {
+            throw new Error(`Failed to find user for feed ${feed.id}`);
+        }
+        
+        const user = {
+                id: user_get[0].id,
+                createdAt: user_get[0].createdAt,
+                updatedAt: user_get[0].updatedAt,
+                name: user_get[0].name
+        }
+
+        printFeed(feed, user);
+    }
 }
 
 export async function printFeed(feed: Feed, user: User): Promise<void> {

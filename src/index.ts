@@ -9,6 +9,7 @@ import { handlerReset } from "./commmands/user";
 import { handlerUsers } from "./commmands/user";
 import { handlerAgg } from "./commmands/feed";
 import { handlerAddFeed } from "./commmands/feed";
+import { handlerGetAllFeeds } from "./commmands/feed";
 
 
 async function main() {
@@ -29,6 +30,7 @@ async function main() {
     registerCommand(commandsRegistry, "users", handlerUsers);
     registerCommand(commandsRegistry, "agg", handlerAgg);
     registerCommand(commandsRegistry, "addfeed", handlerAddFeed);
+    registerCommand(commandsRegistry, "feeds", handlerGetAllFeeds);
 
     try {
         await runCommand(commandsRegistry, cmdName, ...cmdArgs);
