@@ -15,6 +15,13 @@
       "when": 1772303658371,
       "tag": "0001_skinny_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772594745918,
+      "tag": "0002_harsh_sleepwalker",
+      "breakpoints": true
     }
   ]
 }

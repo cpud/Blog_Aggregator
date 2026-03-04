@@ -1,11 +1,12 @@
 import { XMLParser } from "fast-xml-parser";
 import { error } from "node:console";
 import { parse } from "node:path";
-import { createFeed, getFeeds } from "src/lib/db/queries/feed";
+import { createFeed, getFeeds, createFeedFollow, getFeedByUrl, getFeedFollowsForUser } from "src/lib/db/queries/feed";
 import { getUser, getUserById } from "src/lib/db/queries/users";
 import { users } from "src/lib/db/schema";
 import { User, Feed } from "src/lib/db/schema";
 import { readConfig } from "src/config";
+import { read } from "node:fs";
 
 type RSSFeed = {
   channel: {
@@ -45,6 +46,10 @@ export async function handlerAddFeed(cmdName: string, ...args: string[]){
     if (!result) {
         throw new Error("feed not added");
     }
+    const feedFollow = await createFeedFollow(user_use.id, result.id);
+    console.log(`Feed added and followed!`);
+    console.log(`Feed: ${feedFollow.feedName}`);
+    console.log(`User: ${feedFollow.userName}`);
     printFeed(result, user_use)
 }
 export async function handlerAgg(cmdName: string, ...args: string[]) {
@@ -112,7 +117,7 @@ export async function handlerGetAllFeeds(){
 
     console.log(`Found %d feeds: \n`, feeds.length);
     for (let feed of feeds) {
-        const user_get = await getUserById(String(feed.user_id));
+        const user_get = await getUserById(String(feed.userId));
         if (!user_get) {
             throw new Error(`Failed to find user for feed ${feed.id}`);
         }
@@ -128,11 +133,60 @@ export async function handlerGetAllFeeds(){
     }
 }
 
+export async function handlerFollow(cmdName: string, ...args:string[]) {
+    if (args.length === 0) {
+        throw new Error("no url provided");
+    }
+    const feed = await getFeedByUrl(args[0]);
+    if (!feed) {
+        throw new Error(`Feed at ${args[0]} not found`);
+    }
+
+    //const user_get = await getUserById(String(feed[0].userId));
+    //if (!user_get) {
+    //    throw new Error(`Failed to find user for feed ${feed[0].id}`);
+    //}
+    
+    const userName = await readConfig();
+    const user_get = await getUser(userName.currentUserName);
+
+    const user = {
+        id: String(user_get?.id),
+        name: String(user_get?.name),
+        createdAt: new Date(String(user_get?.createdAt)),
+        updatedAt: new Date(String(user_get?.updatedAt))
+    }
+
+
+    const feedFollow = await createFeedFollow(user.id, feed[0].id);
+    console.log(`Now following feed ${feedFollow.feedName}`);
+    console.log(`User: ${feedFollow.userName}`);
+}
+
+
+export async function handlerFollowing(cmdName: string, ...args: string[]) {
+
+    const userName = await readConfig();
+    const user_get = await getUser(userName.currentUserName);
+
+    const user = {
+        id: String(user_get?.id),
+        name: String(user_get?.name),
+        createdAt: new Date(String(user_get?.createdAt)),
+        updatedAt: new Date(String(user_get?.updatedAt))
+    }
+    const feedFollows = await getFeedFollowsForUser(user.id);
+    console.log(`feeds ${user.name} is following`);
+    for (const f of feedFollows) {
+        console.log(`* ${f.feedName}`);
+    }
+}
+
 export async function printFeed(feed: Feed, user: User): Promise<void> {
   console.log(`ID:         ${feed.id}`);
   console.log(`Name:       ${feed.name}`);
   console.log(`URL:        ${feed.url}`);
   console.log(`User:       ${user.name}`);
   console.log(`Created At: ${feed.createdAt}`);
-  console.log(`Updated At: ${feed.updated_at}`);
+  console.log(`Updated At: ${feed.updatedAt}`);
 }
