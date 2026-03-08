@@ -1,6 +1,6 @@
 import { db } from "..";
 import { feedFollows, feeds, users } from "../schema";
-import { eq} from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { getUserById } from "./users";
 import { create } from "node:domain";
 
@@ -8,6 +8,20 @@ export async function createFeed(name: string, url: string, userId: string) {
   console.log(`user id ${userId}`);
   const [result] = await db.insert(feeds).values({name: name, url: url, userId: userId}).returning();
   return result;
+}
+
+export async function markFeedFetched(feedId: string) {
+  await db.update(feeds).set({updatedAt: sql`NOW()`, lastFetchedAt: sql`NOW()`})
+}
+
+export async function getNextFeedToFetch() {
+  const result = await db
+                  .select()
+                  .from(feeds)
+                  .orderBy(sql`${feeds.lastFetchedAt} ASC NULLS FIRST`)
+                  .limit(1);
+  return result[0] ?? null;
+            
 }
 
 export async function getFeeds() {
@@ -62,6 +76,13 @@ export async function getFeedFollowsForUser(userId: string) {
     .innerJoin(feeds, eq(feedFollows.feedId, feeds.id))
     .innerJoin(users, eq(feedFollows.userId, users.id))
     .where(eq(feedFollows.userId, userId));
+}
+
+export async function unfollow(userId: string, feedURL: string) {
+  const feed = await getFeedByUrl(feedURL);
+  const result = await db.delete(feedFollows).where(and(
+                                              eq(feedFollows.userId,userId),
+                                              eq(feedFollows.feedId, feed[0].id)))
 }
 /*
 export async function getAllFeeds() {

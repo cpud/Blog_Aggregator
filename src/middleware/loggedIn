@@ -1,0 +1,13 @@
+import { CommandHandler, UserCommandHandler} from "../commmands/commands";
+import { readConfig } from "../config";
+import { getUser } from "../lib/db/queries/users";
+
+export function middleWareLoggedIn(handler: UserCommandHandler): CommandHandler {
+    return async (cmdName: string, ...args: string[]) => {
+        const cfg = readConfig();
+        if (!cfg.currentUserName) throw new Error ("Not logged in");
+        const user = await getUser(cfg.currentUserName);
+        if (!user) throw new Error (`User ${cfg.currentUserName} does not exist`);
+        await handler(cmdName, user, ...args);
+    }
+}
