@@ -29,6 +29,13 @@
       "when": 1773008691827,
       "tag": "0003_lush_sugar_man",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773024753763,
+      "tag": "0004_mighty_thena",
+      "breakpoints": true
     }
   ]
 }

@@ -4,9 +4,10 @@ import { parse } from "node:path";
 import { createFeed, getFeeds, createFeedFollow, getFeedByUrl, getFeedFollowsForUser, unfollow, getNextFeedToFetch, markFeedFetched } from "src/lib/db/queries/feed";
 import { getUser, getUserById } from "src/lib/db/queries/users";
 import { users } from "src/lib/db/schema";
-import { User, Feed } from "src/lib/db/schema";
+import { User, Feed, Post } from "src/lib/db/schema";
 import { readConfig } from "src/config";
 import { read } from "node:fs";
+import { createPost } from "src/lib/db/queries/posts";
 
 type RSSFeed = {
   channel: {
@@ -227,12 +228,28 @@ export async function scrapeFeeds() {
         return;
     }
     console.log(`Fetching feed ${feed.name}`);
+    scrapeFeed(feed);
 }
 
 export async function scrapeFeed(feed: Feed) {
     await markFeedFetched(feed.id);
 
     const feedData = await fetchFeed(feed.url);
+    for (let item of feedData.channel.item) {
+    console.log(`Found post: %s`, item.title);
+
+    const now = new Date();
+
+    await createPost({
+      url: item.link,
+      feedId: feed.id,
+      title: item.title,
+      createdAt: now,
+      updatedAt: now,
+      description: item.description,
+      publishedAt: new Date(item.pubDate),
+    } satisfies Post);
+  }
 
     console.log(`Feed ${feed.name} gathered, found ${feedData.channel.item.length} posts`);
 }

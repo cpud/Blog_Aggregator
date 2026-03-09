@@ -13,6 +13,7 @@ import { handlerGetAllFeeds } from "./commmands/feed";
 import { UserCommandHandler, CommandHandler } from "./commmands/commands";
 import { readConfig } from "./config";
 import { getUser } from "./lib/db/queries/users";
+import { handlerBrowse } from "./commmands/posts";
 //import { middlewareLoggedIn } from "./middleware/loggedIn.ts"
 
 export function middleWareLoggedIn(handler: UserCommandHandler): CommandHandler {
@@ -48,6 +49,7 @@ async function main() {
     registerCommand(commandsRegistry, "follow", middleWareLoggedIn(handlerFollow));
     registerCommand(commandsRegistry, "following", middleWareLoggedIn(handlerFollowing));
     registerCommand(commandsRegistry, "unfollow", middleWareLoggedIn(handlerUnfolow));
+    registerCommand(commandsRegistry, "browse", middleWareLoggedIn(handlerBrowse));
 
 
     try {
